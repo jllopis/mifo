@@ -98,7 +98,7 @@ func Err(str ...interface{}) {
 
 	pc, fl, ln, _ := runtime.Caller(1)
 
-	pre := fmt.Sprintf("svc=%s tp=error src=%s:%d fn=%s", defaultLogger.Service, path.Base(fl), ln, path.Base(runtime.FuncForPC(pc).Name()))
+	pre := fmt.Sprintf("svc=%s tp=error src=%s:%d fn=%s", defaultLogger.Service, fl, ln, path.Base(runtime.FuncForPC(pc).Name()))
 	data := prepareEntry(pre, str)
 
 	defaultLogger.logger.Printf(data)
@@ -112,7 +112,7 @@ func Info(str ...interface{}) {
 
 	pc, fl, ln, _ := runtime.Caller(1)
 
-	pre := fmt.Sprintf("svc=%s tp=info src=%s:%d fn=%s", defaultLogger.Service, path.Base(fl), ln, path.Base(runtime.FuncForPC(pc).Name()))
+	pre := fmt.Sprintf("svc=%s tp=info src=%s:%d fn=%s", defaultLogger.Service, fl, ln, path.Base(runtime.FuncForPC(pc).Name()))
 	data := prepareEntry(pre, str)
 
 	defaultLogger.logger.Print(data)
