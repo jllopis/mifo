@@ -35,16 +35,18 @@ type StdLogger interface {
 
 // Log permite la configuración del logger
 type Log struct {
-	logger  StdLogger
-	Service string
-	Version string
+	logger            StdLogger
+	Service           string
+	Version           string
+	PrintAbsolutePath bool
 }
 
 // LogConfig contiene la configuración para el logger
 type LogConfig struct {
-	Logger  *log.Logger
-	Service string
-	Version string
+	Logger            *log.Logger
+	Service           string
+	Version           string
+	PrintAbsolutePath bool
 }
 
 func init() {
@@ -62,9 +64,10 @@ func init() {
 // occurs, *Log should be nil.
 func New(c *LogConfig) *Log {
 	return &Log{
-		logger:  c.Logger,
-		Service: c.Service,
-		Version: c.Version,
+		logger:            c.Logger,
+		Service:           c.Service,
+		Version:           c.Version,
+		PrintAbsolutePath: c.PrintAbsolutePath,
 	}
 }
 
@@ -98,7 +101,12 @@ func Err(str ...interface{}) {
 
 	pc, fl, ln, _ := runtime.Caller(1)
 
-	pre := fmt.Sprintf("svc=%s tp=error src=%s:%d fn=%s", defaultLogger.Service, path.Base(fl), ln, path.Base(runtime.FuncForPC(pc).Name()))
+	filePath := fl
+	if !defaultLogger.PrintAbsolutePath {
+		filePath = path.Base(fl)
+	}
+
+	pre := fmt.Sprintf("svc=%s tp=error src=%s:%d fn=%s", defaultLogger.Service, filePath, ln, path.Base(runtime.FuncForPC(pc).Name()))
 	data := prepareEntry(pre, str)
 
 	defaultLogger.logger.Printf(data)
@@ -112,7 +120,12 @@ func Info(str ...interface{}) {
 
 	pc, fl, ln, _ := runtime.Caller(1)
 
-	pre := fmt.Sprintf("svc=%s tp=info src=%s:%d fn=%s", defaultLogger.Service, path.Base(fl), ln, path.Base(runtime.FuncForPC(pc).Name()))
+	filePath := fl
+	if !defaultLogger.PrintAbsolutePath {
+		filePath = path.Base(fl)
+	}
+
+	pre := fmt.Sprintf("svc=%s tp=info src=%s:%d fn=%s", defaultLogger.Service, filePath, ln, path.Base(runtime.FuncForPC(pc).Name()))
 	data := prepareEntry(pre, str)
 
 	defaultLogger.logger.Print(data)
