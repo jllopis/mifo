@@ -13,6 +13,7 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
+// GrpcServer holds the components that build up a Microserver
 type GrpcServer struct {
 	Name         string
 	Address      string
@@ -33,6 +34,14 @@ type GrpcServer struct {
 	GrpcReflection           bool
 }
 
+// InterceptorInitializer defines an interface with the methods that
+// should be implemented to setup an interceptor.
+//
+// InterceptorInitializers will be added to GrpcServer.InterceptorInitializers slice
+// and when the server is created, this array will be traversed and for every item the
+// method Init(*GrpcServer) will be called.
+//
+// This will register the intercepto into the GrpcSrv.
 type InterceptorInitializer interface {
 	Init(*GrpcServer)
 }
@@ -42,7 +51,7 @@ type MicroServer interface {
 	SetID(string) MicroServer
 	UseUnaryInterceptor(grpc.UnaryServerInterceptor)
 	UseStreamInterceptor(grpc.StreamServerInterceptor)
-	RegisterInterceptoInitializer(InterceptorInitializer)
+	RegisterInterceptorInitializer(InterceptorInitializer)
 	// Handle(http.Handler) error
 	Register(ServiceRegistrator)
 	// Deregister() error
@@ -117,7 +126,7 @@ func (g *GrpcServer) UseStreamInterceptor(inter grpc.StreamServerInterceptor) {
 	g.StreamInter = append(g.StreamInter, inter)
 }
 
-func (g *GrpcServer) RegisterInterceptoInitializer(i InterceptorInitializer) {
+func (g *GrpcServer) RegisterInterceptorInitializer(i InterceptorInitializer) {
 	g.InterceptorInitializers = append(g.InterceptorInitializers, i)
 }
 
