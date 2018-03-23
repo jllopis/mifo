@@ -30,7 +30,7 @@ func (g *GrpcServer) UsePrometheus(conf *PrometheusInterceptorConfig) *GrpcServe
 		g.HttpMux.Handle("/metrics", prometheus.Handler())
 	}
 
-	g.RegisterInterceptoInitializer(conf)
+	g.RegisterInterceptorInitializer(conf)
 
 	return g
 }
