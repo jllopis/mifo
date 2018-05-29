@@ -1,14 +1,16 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 
-	"bitbucket.org/acbapis/acbapis/lib/go/status"
+	"bitbucket.org/acbapis/acbapis/status"
 	"google.golang.org/grpc"
 
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/jllopis/mifo"
 	"github.com/jllopis/mifo/cmd/sample/impl"
 	"github.com/jllopis/mifo/log"
@@ -50,6 +52,17 @@ func main() {
 		status.RegisterStatusServiceServer(srv, &impl.StatusService{})
 	}
 	api.Register(statusRegistrator)
+
+	// Use grpc-gw ...
+	api.UseGrpcGw()
+	// ... and register http proxy services
+	opts := []grpc.DialOption{
+		grpc.WithInsecure(),
+	}
+	statusGwRegistrator := func(srv *runtime.ServeMux) {
+		status.RegisterStatusServiceHandlerFromEndpoint(context.Background(), srv, "localhost:"+api.Port, opts)
+	}
+	api.RegisterGw(statusGwRegistrator)
 
 	log.Info("Serving...")
 	log.Info("Prometheus metrics on port " + api.Port)
