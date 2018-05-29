@@ -3,8 +3,11 @@ package mifo
 import (
 	"fmt"
 	"net"
+	"net/http"
 	"strconv"
 
+	"github.com/codahale/metrics"
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/jllopis/mifo/log"
 	"github.com/soheilhy/cmux"
 )
@@ -46,6 +49,21 @@ func (g *GrpcServer) UseReflection() *GrpcServer {
 	return g
 }
 
+func (g *GrpcServer) UseGrpcGw() *GrpcServer {
+	g.GrpcGwMux = runtime.NewServeMux()
+	g.HttpMux.Handle("/", logh(g.GrpcGwMux))
+	return g
+}
+
 func (g *GrpcServer) String() string {
 	return fmt.Sprintf("gRPC Microservice\n=================\n  Name: %s\n  ID: %s\n", g.Name, g.ID)
+}
+
+func logh(handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Info(fmt.Sprintf("%s %s %s", r.RemoteAddr, r.Method, r.URL))
+		// Registrar llamada REST
+		metrics.Counter("rest.requests").Add()
+		handler.ServeHTTP(w, r)
+	})
 }
