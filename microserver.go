@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware"
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/jllopis/mifo/log"
 	"github.com/segmentio/ksuid"
 	"github.com/soheilhy/cmux"
@@ -26,11 +27,13 @@ type GrpcServer struct {
 	HttpListener net.Listener
 	HttpMux      *http.ServeMux
 	HttpSrv      *http.Server
+	GrpcGwMux    *runtime.ServeMux
 	// Interceptors
 	UnaryInter               []grpc.UnaryServerInterceptor
 	StreamInter              []grpc.StreamServerInterceptor
 	InterceptorInitializers  []InterceptorInitializer
 	GrpcServicesRegistrators []ServiceRegistrator
+	GrpcGwRegistrators       []ServiceGwRegistrator
 	GrpcReflection           bool
 }
 
@@ -130,10 +133,17 @@ func (g *GrpcServer) RegisterInterceptorInitializer(i InterceptorInitializer) {
 	g.InterceptorInitializers = append(g.InterceptorInitializers, i)
 }
 
-type ServiceRegistrator func(*grpc.Server)
+type (
+	ServiceRegistrator   func(*grpc.Server)
+	ServiceGwRegistrator func(*runtime.ServeMux)
+)
 
 func (g *GrpcServer) Register(sr ServiceRegistrator) {
 	g.GrpcServicesRegistrators = append(g.GrpcServicesRegistrators, sr)
+}
+
+func (g *GrpcServer) RegisterGw(sg ServiceGwRegistrator) {
+	g.GrpcGwRegistrators = append(g.GrpcGwRegistrators, sg)
 }
 
 func (g *GrpcServer) Serve() error {
@@ -144,6 +154,7 @@ func (g *GrpcServer) Serve() error {
 	g.initializeInterceptors()
 
 	g.registerGrpcServices()
+	g.registerGrpcGwServices()
 
 	if g.GrpcReflection {
 		reflection.Register(g.GrpcSrv)
@@ -167,6 +178,12 @@ func (g *GrpcServer) initializeInterceptors() {
 func (g *GrpcServer) registerGrpcServices() {
 	for _, s := range g.GrpcServicesRegistrators {
 		s(g.GrpcSrv)
+	}
+}
+
+func (g *GrpcServer) registerGrpcGwServices() {
+	for _, s := range g.GrpcGwRegistrators {
+		s(g.GrpcGwMux)
 	}
 }
 
