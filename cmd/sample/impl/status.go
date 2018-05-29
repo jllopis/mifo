@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"bitbucket.org/acbapis/acbapis/lib/go/common"
-	"bitbucket.org/acbapis/acbapis/lib/go/status"
+	"bitbucket.org/acbapis/acbapis/common"
+	"bitbucket.org/acbapis/acbapis/status"
 	"github.com/jllopis/mifo/version"
 )
 
