@@ -9,7 +9,7 @@ package version
 import (
 	"fmt"
 
-	"github.com/coreos/go-semver/semver"
+	semver "github.com/hashicorp/go-version"
 )
 
 var (

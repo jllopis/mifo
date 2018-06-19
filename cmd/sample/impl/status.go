@@ -20,7 +20,7 @@ func (st *StatusService) GetServerTime(ctx context.Context, empty *common.EmptyM
 	return &status.ServerTimeMessage{Value: time.Now().UTC().UnixNano()}, nil
 }
 
-// GetVersion returns the current API Version. It is a direct mapping from github.com/coreos/go-semver/semver.Version
+// GetVersion returns the current API Version. It is a direct mapping from go-version "github.com/hashicorp/go-version.Version
 func (st *StatusService) GetVersion(ctx context.Context, empty *common.EmptyMessage) (*common.Version, error) {
 	return &common.Version{
 		Version:    version.Version,

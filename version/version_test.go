@@ -3,7 +3,7 @@ package version
 import (
 	"testing"
 
-	"github.com/coreos/go-semver/semver"
+	semver "github.com/hashicorp/go-version"
 )
 
 type testValues struct {
@@ -12,7 +12,7 @@ type testValues struct {
 	Major      int64
 	Minor      int64
 	Patch      int64
-	PreRelease semver.PreRelease
+	PreRelease string
 	Metadata   string
 	GitCommit  string
 }
@@ -24,6 +24,9 @@ var (
 		{"0.0.1", "0.0.1", 0, 0, 1, "", "", ""},
 		{"0.0.1-dirty", "0.0.1-dirty", 0, 0, 1, "dirty", "", ""},
 		{"0.0.1-212-gbf8a411-dirty", "0.0.1-212-gbf8a411-dirty", 0, 0, 1, "212-gbf8a411-dirty", "", "f8a411"},
+		{"0.0.1-212-gbf8a411", "v0.0.1-212-gbf8a411", 0, 0, 1, "212-gbf8a411", "", "f8a411"},
+		{"v0.0.1", "0.0.1", 0, 0, 1, "", "", ""},
+		{"v0.0.1-dirty", "v0.0.1-dirty", 0, 0, 1, "dirty", "", ""},
 	}
 )
 
@@ -34,29 +37,31 @@ func TestSemVer(t *testing.T) {
 		if err != nil {
 			t.Error("error creating semver.NewVersion", err)
 		}
-		if semver.Major != test.Major {
+		semverSegments := semver.Segments64()
+		// testSegments := semver.Segments64()
+		if semverSegments[0] != test.Major {
 			t.Error("For", test.value,
-				"Got", semver.Major,
+				"Got", semverSegments[0],
 				"Expected", test.Major)
 		}
-		if semver.Minor != test.Minor {
+		if semverSegments[1] != test.Minor {
 			t.Error("For", test.value,
-				"Got", semver.Minor,
+				"Got", semverSegments[1],
 				"Expected", test.Minor)
 		}
-		if semver.Patch != test.Patch {
+		if semverSegments[2] != test.Patch {
 			t.Error("For", test.value,
-				"Got", semver.Patch,
+				"Got", semverSegments[2],
 				"Expected", test.Patch)
 		}
-		if semver.PreRelease != test.PreRelease {
+		if semver.Prerelease() != test.PreRelease {
 			t.Error("For", test.value,
-				"Got", semver.PreRelease,
+				"Got", semver.Prerelease(),
 				"Expected", test.PreRelease)
 		}
-		if semver.Metadata != test.Metadata {
+		if semver.Metadata() != test.Metadata {
 			t.Error("For", test.value,
-				"Got", semver.Metadata,
+				"Got", semver.Metadata(),
 				"Expected", test.Metadata)
 		}
 	}
