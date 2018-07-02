@@ -12,6 +12,32 @@ import (
 	"github.com/soheilhy/cmux"
 )
 
+type options struct {
+	cors        bool
+	metrics     bool
+	logRequests bool
+}
+
+type Option func(*options)
+
+func WithCORS() Option {
+	return func(o *options) {
+		o.cors = true
+	}
+}
+
+func WithMetrics() Option {
+	return func(o *options) {
+		o.metrics = true
+	}
+}
+
+func LogRequests() Option {
+	return func(o *options) {
+		o.logRequests = true
+	}
+}
+
 func (g *GrpcServer) WithListener(l net.Listener) *GrpcServer {
 	// Crear el muxer cmux
 	g.CmuxSrv = newCMux(l)
@@ -49,9 +75,16 @@ func (g *GrpcServer) UseReflection() *GrpcServer {
 	return g
 }
 
-func (g *GrpcServer) UseGrpcGw() *GrpcServer {
+func (g *GrpcServer) UseGrpcGw(opts ...Option) *GrpcServer {
+	grpcGwOpts := &options{}
+	for _, opt := range opts {
+		opt(grpcGwOpts)
+	}
+
+	g.grpcGwOpts = *grpcGwOpts
+
 	g.GrpcGwMux = runtime.NewServeMux()
-	g.HttpMux.Handle("/", logh(g.GrpcGwMux))
+	g.HttpMux.Handle("/", g.indexHandler(g.GrpcGwMux))
 	return g
 }
 
@@ -59,11 +92,31 @@ func (g *GrpcServer) String() string {
 	return fmt.Sprintf("gRPC Microservice\n=================\n  Name: %s\n  ID: %s\n", g.Name, g.ID)
 }
 
-func logh(handler http.Handler) http.Handler {
+func (g *GrpcServer) indexHandler(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Info(fmt.Sprintf("%s %s %s", r.RemoteAddr, r.Method, r.URL))
-		// Registrar llamada REST
-		metrics.Counter("rest.requests").Add()
+		if g.grpcGwOpts.logRequests {
+			log.Info(fmt.Sprintf("%s %s %s", r.RemoteAddr, r.Method, r.URL))
+		}
+
+		if g.grpcGwOpts.metrics {
+			// Registrar llamada REST
+			metrics.Counter("rest.requests").Add()
+		}
+
+		if g.grpcGwOpts.cors {
+			enableCors(&w)
+
+			if r.Method == "OPTIONS" {
+				return
+			}
+		}
+
 		handler.ServeHTTP(w, r)
 	})
+}
+
+func enableCors(w *http.ResponseWriter) {
+	(*w).Header().Set("Access-Control-Allow-Origin", "*")
+	(*w).Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	(*w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 }

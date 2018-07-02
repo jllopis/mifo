@@ -28,6 +28,7 @@ type GrpcServer struct {
 	HttpMux      *http.ServeMux
 	HttpSrv      *http.Server
 	GrpcGwMux    *runtime.ServeMux
+	grpcGwOpts   options
 	// Interceptors
 	UnaryInter               []grpc.UnaryServerInterceptor
 	StreamInter              []grpc.StreamServerInterceptor
