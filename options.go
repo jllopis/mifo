@@ -13,9 +13,10 @@ import (
 )
 
 type options struct {
-	cors        bool
-	metrics     bool
-	logRequests bool
+	cors                  bool
+	metrics               bool
+	logRequests           bool
+	outgoingHeaderMatcher runtime.HeaderMatcherFunc
 }
 
 type Option func(*options)
@@ -29,6 +30,12 @@ func WithCORS() Option {
 func WithMetrics() Option {
 	return func(o *options) {
 		o.metrics = true
+	}
+}
+
+func WithOutgoingHeaderMatcher(fn runtime.HeaderMatcherFunc) Option {
+	return func(o *options) {
+		o.outgoingHeaderMatcher = fn
 	}
 }
 
@@ -83,7 +90,8 @@ func (g *GrpcServer) UseGrpcGw(opts ...Option) *GrpcServer {
 
 	g.grpcGwOpts = *grpcGwOpts
 
-	g.GrpcGwMux = runtime.NewServeMux()
+	outgoingHeaderMatcher := g.grpcGwOpts.outgoingHeaderMatcher
+	g.GrpcGwMux = runtime.NewServeMux(runtime.WithOutgoingHeaderMatcher(outgoingHeaderMatcher))
 	g.HttpMux.Handle("/", g.indexHandler(g.GrpcGwMux))
 	return g
 }
