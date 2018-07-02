@@ -54,7 +54,12 @@ func main() {
 	api.Register(statusRegistrator)
 
 	// Use grpc-gw ...
-	api.UseGrpcGw()
+	api.UseGrpcGw(
+		mifo.WithCORS(),
+		mifo.WithMetrics(),
+		mifo.LogRequests(),
+		mifo.WithOutgoingHeaderMatcher(runtime.DefaultHeaderMatcher),
+	)
 	// ... and register http proxy services
 	opts := []grpc.DialOption{
 		grpc.WithInsecure(),
