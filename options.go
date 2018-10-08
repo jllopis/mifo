@@ -77,6 +77,11 @@ func (g *GrpcServer) SetPort(port int) *GrpcServer {
 	return g.WithListener(l)
 }
 
+func (g *GrpcServer) SetMaxConcurrentStreams(n int) *GrpcServer {
+	g.MaxConcurrentStreams = n
+	return g
+}
+
 func (g *GrpcServer) UseReflection() *GrpcServer {
 	g.GrpcReflection = true
 	return g

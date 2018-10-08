@@ -16,19 +16,20 @@ import (
 
 // GrpcServer holds the components that build up a Microserver
 type GrpcServer struct {
-	Name         string
-	Address      string
-	Port         string
-	ID           string
-	Version      string
-	CmuxSrv      cmux.CMux
-	GrpcListener net.Listener
-	GrpcSrv      *grpc.Server
-	HttpListener net.Listener
-	HttpMux      *http.ServeMux
-	HttpSrv      *http.Server
-	GrpcGwMux    *runtime.ServeMux
-	grpcGwOpts   options
+	Name                 string
+	Address              string
+	Port                 string
+	ID                   string
+	Version              string
+	CmuxSrv              cmux.CMux
+	GrpcListener         net.Listener
+	GrpcSrv              *grpc.Server
+	HttpListener         net.Listener
+	HttpMux              *http.ServeMux
+	HttpSrv              *http.Server
+	GrpcGwMux            *runtime.ServeMux
+	grpcGwOpts           options
+	MaxConcurrentStreams int
 	// Interceptors
 	UnaryInter               []grpc.UnaryServerInterceptor
 	StreamInter              []grpc.StreamServerInterceptor
@@ -148,9 +149,15 @@ func (g *GrpcServer) RegisterGw(sg ServiceGwRegistrator) {
 }
 
 func (g *GrpcServer) Serve() error {
-	g.GrpcSrv = grpc.NewServer(
+	grpcOpts := []grpc.ServerOption{
 		grpc_middleware.WithUnaryServerChain(g.UnaryInter...),
 		grpc_middleware.WithStreamServerChain(g.StreamInter...),
+	}
+	if g.MaxConcurrentStreams > 0 {
+		grpcOpts = append(grpcOpts, grpc.MaxConcurrentStreams(uint32(g.MaxConcurrentStreams)))
+	}
+	g.GrpcSrv = grpc.NewServer(
+		grpcOpts...,
 	)
 	g.initializeInterceptors()
 
