@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/codahale/metrics"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
@@ -31,6 +32,53 @@ func WithMetrics() Option {
 	return func(o *options) {
 		o.metrics = true
 	}
+}
+
+// DefaultHeaderMatcher is used to pass http request headers to/from gRPC context. This adds permanent HTTP header
+// keys (as specified by the IANA) to gRPC context with grpcgateway- prefix. HTTP headers that start with
+// 'Grpc-Metadata-' are mapped to gRPC metadata after removing prefix 'Grpc-Metadata-'.
+func DefaultHeaderMatcher(key string) (string, bool) {
+	if isPermanentHTTPHeader(key) {
+		return runtime.MetadataPrefix + key, true
+	} else if strings.HasPrefix(strings.ToLower(key), strings.ToLower(runtime.MetadataHeaderPrefix)) {
+		return key[len(runtime.MetadataHeaderPrefix):], true
+	}
+	return "", false
+}
+
+// isPermanentHTTPHeader checks whether hdr belongs to the list of
+// permenant request headers maintained by IANA.
+// http://www.iana.org/assignments/message-headers/message-headers.xml
+func isPermanentHTTPHeader(hdr string) bool {
+	switch hdr {
+	case
+		"Accept",
+		"Accept-Charset",
+		"Accept-Language",
+		"Accept-Ranges",
+		"Authorization",
+		"Cache-Control",
+		"Content-Type",
+		"Cookie",
+		"Date",
+		"Expect",
+		"From",
+		"Host",
+		"If-Match",
+		"If-Modified-Since",
+		"If-None-Match",
+		"If-Schedule-Tag-Match",
+		"If-Unmodified-Since",
+		"Max-Forwards",
+		"Origin",
+		"Pragma",
+		"Referer",
+		"User-Agent",
+		"Via",
+		"Warning":
+		return true
+	}
+	return false
 }
 
 func WithOutgoingHeaderMatcher(fn runtime.HeaderMatcherFunc) Option {
