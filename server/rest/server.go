@@ -2,8 +2,10 @@ package rest
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"net/http"
+	"time"
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/jllopis/mifo/logger"
@@ -12,9 +14,10 @@ import (
 )
 
 type RestServer struct {
-	httpSrv *http.Server
-	httpMux *http.ServeMux
-	gwMux   *runtime.ServeMux
+	httpSrv  *http.Server
+	httpMux  *http.ServeMux
+	gwMux    *runtime.ServeMux
+	listener net.Listener
 }
 
 func New(o *option.MsOptions) *RestServer {
@@ -39,6 +42,7 @@ func (r *RestServer) Serve(listen net.Listener) {
 	if listen == nil {
 		logger.Log.Error("rest.New got a nil listener")
 	}
+	r.listener = listen
 
 	logger.Log.Info("starting HTTP/REST gateway on " + listen.Addr().String())
 	r.httpSrv.Serve(listen)
@@ -50,4 +54,13 @@ func (r *RestServer) Serve(listen net.Listener) {
 
 func (r *RestServer) GetHttpMux() *http.ServeMux {
 	return r.httpMux
+}
+
+func (r *RestServer) Shutdown() {
+	fmt.Println("Shutting down http server")
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	r.httpSrv.Shutdown(ctx)
+	// r.listener.Close()
+	fmt.Println("http server server shot down")
 }

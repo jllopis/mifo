@@ -10,17 +10,21 @@ import (
 	"github.com/jllopis/mifo/server/rest"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/soheilhy/cmux"
+	"golang.org/x/sync/errgroup"
 )
 
 type MicroServer interface {
 	Serve() error
-	// Shutdown() error
+	Shutdown()
 	Version() string
 	String() string
 }
 
 type Mserver struct {
 	opts         *option.MsOptions
+	grpcSrv      *grpc.GrpcServer
+	restSrv      *rest.RestServer
+	tracker      *errgroup.Group
 	shutdownFunc func()
 }
 
@@ -59,10 +63,12 @@ func (ms *Mserver) Serve() error {
 	// run gRPC gateway
 	grpcSrv := grpc.New(ms.opts)
 	go grpcSrv.Serve(grpcListener)
+	ms.grpcSrv = grpcSrv
 
 	// run HTTP gateway
 	restSrv := rest.New(ms.opts)
 	go restSrv.Serve(httpListener)
+	ms.restSrv = restSrv
 
 	if ms.opts.UsePrometheus {
 		// Register Prometheus metrics handler.
@@ -82,4 +88,11 @@ func newCmux(l net.Listener, addr string) (cmux.CMux, error) {
 		}
 	}
 	return cmux.New(l), nil
+}
+
+func (ms *Mserver) Shutdown() {
+	fmt.Println("Shutting server down...")
+	ms.grpcSrv.Shutdown()
+	ms.restSrv.Shutdown()
+	fmt.Println("Done!")
 }
