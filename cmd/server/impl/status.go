@@ -6,6 +6,9 @@ import (
 
 	"bitbucket.org/acbapis/acbapis/common"
 	"bitbucket.org/acbapis/acbapis/status"
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/jllopis/mifo/server/grpc/middleware"
+	restMw "github.com/jllopis/mifo/server/rest/middleware"
 	"github.com/jllopis/mifo/version"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -15,14 +18,32 @@ import (
 // - Time -> returns UTC epoch time in nanoseconds precision
 // - Version -> returns the current version of the service
 // - Status -> returns the current status of the service
-type StatusService struct{}
+type StatusService struct {
+	middleware.FuncGrpcService
+}
+
+func NewStatusService() *StatusService {
+	ss := &StatusService{}
+	ss.FuncGrpcService = func(srv *grpc.Server) {
+		status.RegisterStatusServiceServer(srv, ss)
+	}
+	return ss
+}
+
+type StatusRestService struct {
+	restMw.FuncRestService
+}
+
+func NewStatusRestService() *StatusRestService {
+	ss := &StatusRestService{}
+	ss.FuncRestService = func(ctx context.Context, r *runtime.ServeMux, addr string, opts ...grpc.DialOption) {
+		status.RegisterStatusServiceHandlerFromEndpoint(ctx, r, addr, opts)
+	}
+	return ss
+}
 
 // GetServerTime returns the current UTC server time in nanoseconds
 func (st *StatusService) GetServerTime(ctx context.Context, empty *common.EmptyMessage) (*status.ServerTimeMessage, error) {
-	headerVal := "max-age=600, s-maxage=600"
-	grpc.SetHeader(ctx, metadata.Pairs("Grpc-Metadata-Cache-Control", headerVal))
-	grpc.SetHeader(ctx, metadata.Pairs("Grpc-Metadata-X-App-Cache-Control", headerVal))
-
 	return &status.ServerTimeMessage{Value: time.Now().UTC().UnixNano()}, nil
 }
 
