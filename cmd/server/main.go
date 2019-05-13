@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"syscall"
 
 	"github.com/jllopis/mifo"
 	"github.com/jllopis/mifo/cmd/server/impl"
@@ -80,19 +81,17 @@ func main() {
 		os.Exit(1)
 	}
 
-	logger.Log.Info("Server version", zap.String("value", srv.Version()))
-	fmt.Println(srv.String())
-
 	sc := make(chan os.Signal, 1)
-	signal.Notify(sc, os.Interrupt)
+	signal.Notify(sc, syscall.SIGKILL, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	go func() {
-		s := <-sc
-		fmt.Printf("[main] Signal %+v captured. Calling srv.Shutdown()\n", s)
+		sig := <-sc
+		fmt.Printf("Signal received: %#+v\n", sig)
 		srv.Shutdown()
 		os.Exit(0)
 	}()
 
-	logger.Log.Info(srv.Serve().Error())
+	logger.Log.Info("Server version", zap.String("value", srv.Version()))
+	fmt.Println(srv.String())
 
-	logger.Log.Info("Sample finished")
+	logger.Log.Info(srv.Serve().Error())
 }

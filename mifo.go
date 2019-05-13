@@ -1,12 +1,15 @@
 package mifo
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net"
+	"time"
 
 	"github.com/jllopis/mifo/option"
 	"github.com/jllopis/mifo/server/grpc"
+	"github.com/jllopis/mifo/server/grpc/middleware"
 	"github.com/jllopis/mifo/server/rest"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/soheilhy/cmux"
@@ -92,7 +95,12 @@ func newCmux(l net.Listener, addr string) (cmux.CMux, error) {
 
 func (ms *Mserver) Shutdown() {
 	fmt.Println("Shutting server down...")
-	ms.grpcSrv.Shutdown()
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer shutdownCancel()
 	ms.restSrv.Shutdown()
+	middleware.HealthShutdown()
+
+	// the last one because in our test it hangs without quittion
+	ms.grpcSrv.Shutdown(shutdownCtx)
 	fmt.Println("Done!")
 }

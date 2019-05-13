@@ -29,7 +29,7 @@ func SetHealthStatus(serviceName string, status grpc_health_v1.HealthCheckRespon
 	healthSrv.SetServingStatus(fmt.Sprintf("grpc.health.v1.%s", serviceName), status)
 }
 
-func Shutdown() {
+func HealthShutdown() {
 	if healthSrv != nil {
 		log.Printf("Shutting down healthz server...")
 		healthSrv.Shutdown()

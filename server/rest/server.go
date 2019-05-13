@@ -2,7 +2,6 @@ package rest
 
 import (
 	"context"
-	"fmt"
 	"net"
 	"net/http"
 	"time"
@@ -57,10 +56,10 @@ func (r *RestServer) GetHttpMux() *http.ServeMux {
 }
 
 func (r *RestServer) Shutdown() {
-	fmt.Println("Shutting down http server")
+	logger.Log.Info("Shutting down http server")
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 	r.httpSrv.Shutdown(ctx)
-	// r.listener.Close()
-	fmt.Println("http server server shot down")
+	r.listener.Close()
+	logger.Log.Info("http server server shot down")
 }

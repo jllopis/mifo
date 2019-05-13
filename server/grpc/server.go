@@ -1,11 +1,12 @@
 package grpc
 
 import (
+	"context"
 	"errors"
-	"fmt"
 	"net"
-	"time"
+	"os"
 
+	"github.com/jllopis/mifo/logger"
 	"github.com/jllopis/mifo/option"
 	"google.golang.org/grpc"
 )
@@ -36,25 +37,15 @@ func (g *GrpcServer) Serve(l net.Listener) error {
 	return g.server.Serve(l)
 }
 
-func (g *GrpcServer) Shutdown() {
-	stopped := make(chan struct{})
+func (g *GrpcServer) Shutdown(ctx context.Context) {
 	go func() {
-		fmt.Println("Shutting down gRPC server...")
-		g.server.GracefulStop()
-		close(stopped)
+		select {
+		case <-ctx.Done():
+			logger.Log.Info(ctx.Err().Error()) // prints "context deadline exceeded"
+			os.Exit(1)
+		}
 	}()
-	fmt.Println("waiting for gRPC connections to finish...")
-	t := time.NewTimer(10 * time.Second)
-	select {
-	case <-t.C:
-		fmt.Println("timed out. stopping gRPC server...")
-		g.server.Stop()
-	case <-stopped:
-		fmt.Println("cancelling timer...")
-		t.Stop()
-	}
-	fmt.Println("gRPC server stopped")
-	// fmt.Println("Closing grpc listener")
-	// g.listener.Close()
-	fmt.Println("gRPC server shot down")
+	logger.Log.Info("Shutting down gRPC server...")
+	g.server.Stop()
+	logger.Log.Info("gRPC server shot down")
 }

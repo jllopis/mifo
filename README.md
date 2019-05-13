@@ -17,21 +17,11 @@ It takes care of:
 You should vendor the dependencies needed in your project. Depending on the features used the
 requirements will vary.
 
-- [Go >= v1.8](https://golang.org/dl)
-- [dep](https://github.com/golang/dep)
+- [Go v1.12+](https://golang.org/dl)
 - [gRPC](google.golang.org/grpc)
 - [Go Protocol Buffers](github.com/golang/protobuf)
 - [cmux](github.com/cockroachdb/cmux)
-- [metrics](github.com/codahale/metrics)
-- [getconf](github.com/jllopis/getconf)
-- [libkv](github.com/abronan/libkv)
-- [consul api](github.com/hashicorp/consul/api)
-- [etcd v3](github.com/coreos/etcd/clientv3)
 - [Trace](golang.org/x/net/trace)
-
-Also, the protobuf compiler will be needed if you want to rebuild the go files:
-
-- [Compilador Protocol Buffers (protoc) v3.5.0](https://github.com/google/protobuf/releases)
 
 # Guide
 
@@ -43,4 +33,4 @@ Also, the protobuf compiler will be needed if you want to rebuild the go files:
 
 ## Service Definition
 
-## RPC Methods
+## Methods
