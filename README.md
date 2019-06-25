@@ -34,3 +34,12 @@ requirements will vary.
 ## Service Definition
 
 ## Methods
+
+# Other projects
+
+Check if this can make this easy:
+
+- VFS: 
+-  - https://github.com/twpayne/go-vfs
+-  - https://github.com/src-d/go-billy
+
